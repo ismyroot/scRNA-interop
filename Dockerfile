@@ -1,10 +1,10 @@
-# scRNA-interop：格式互转、reticulate、极化/UpSet/共识聚类/杂项可视化（对应 singlecell_image_plan.md §七 singlecell-interop）。
+# scRNA-interop：格式互转、reticulate、极化/UpSet/共识聚类/杂项可视化 + DecontX（对应 singlecell_image_plan.md §七 singlecell-interop）。
 # 典型工具：scRNA_creatH5toseurat.qmd、scRNARDStoSamplematrixAnalysis.qmd、single_cell_polarization_analysis.qmd、
 #           consensus_clustering_analysis.qmd、scRNA_upsetRmulticelltype.qmd
 #
 # 包来源概览：
 #   CRAN：hdf5r、R.utils、reticulate、colorRamps、UpSetR、Hmisc、gt
-#   Bioconductor：ConsensusClusterPlus
+#   Bioconductor：ConsensusClusterPlus、SingleCellExperiment、celda
 #   GitHub：SeuratDisk（mojaveazure/seurat-disk）、scupa（bsml320/Scupa）、loomR（CRAN 已存档，用 mojaveazure/loomR）、
 #           DoubletFinder（plot1cell 依赖）、plot1cell（HaojiaWu/plot1cell，会拉取大量 Bioc/CRAN 依赖）
 # 未预装：openai、devtools（方案中标注为默认不建议）
@@ -19,7 +19,7 @@ FROM quay.io/1733295510/scrna-base:v1
 
 LABEL maintainer="1733295510 <1733295510@qq.com>"
 LABEL org.opencontainers.image.title="scRNA-interop"
-LABEL org.opencontainers.image.description="hdf5r, SeuratDisk, reticulate, scupa, ConsensusClusterPlus, UpSetR, plot1cell, Hmisc, gt (+ heavy plot1cell deps)."
+LABEL org.opencontainers.image.description="hdf5r, SeuratDisk, reticulate, scupa, ConsensusClusterPlus, SingleCellExperiment, celda, UpSetR, plot1cell, Hmisc, gt (+ heavy plot1cell deps)."
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
@@ -61,6 +61,12 @@ RUN R -e "nc <- suppressWarnings(as.integer(Sys.getenv('R_INSTALL_NCPUS', '4')))
   options(Ncpus = nc); \
   BiocManager::install('ConsensusClusterPlus', ask = FALSE, update = FALSE, Ncpus = nc)"
 
+# Bioconductor：DecontX 相关依赖（celda + SingleCellExperiment）
+RUN R -e "nc <- suppressWarnings(as.integer(Sys.getenv('R_INSTALL_NCPUS', '4'))); \
+  nc <- if (is.na(nc) || nc < 1L) 1L else nc; \
+  options(Ncpus = nc); \
+  BiocManager::install(c('SingleCellExperiment', 'celda'), ask = FALSE, update = FALSE, Ncpus = nc)"
+
 # SeuratDisk：h5Seurat / 与 AnnData 互转（依赖 hdf5r）
 RUN R -e "options(repos = BiocManager::repositories()); \
   remotes::install_github('mojaveazure/seurat-disk', upgrade = 'never', dependencies = TRUE)"
@@ -89,13 +95,16 @@ RUN R -e "\
     library(scupa);\
     library(colorRamps);\
     library(ConsensusClusterPlus);\
+    library(SingleCellExperiment);\
+    library(celda);\
     library(UpSetR);\
     library(plot1cell);\
     library(Hmisc);\
     library(gt);\
   });\
   cat('scRNA-interop OK: SeuratDisk', as.character(packageVersion('SeuratDisk')), \
-      ' plot1cell', as.character(packageVersion('plot1cell')), '\n')\
+      ' plot1cell', as.character(packageVersion('plot1cell')), \
+      ' celda', as.character(packageVersion('celda')), '\n')\
 "
 
 WORKDIR /work
