@@ -15,7 +15,7 @@
 #   cd /home/ubuntu/zhaoyiran/TOOL-Dockerfile/singlecell/scRNA-interop
 #   docker build --build-arg R_INSTALL_NCPUS=8 -t quay.io/1733295510/scrna-interop:v1 .
 
-FROM quay.io/1733295510/scrna-base:v1
+FROM quay.io/1733295510/scrna-base:V1.0.1
 
 LABEL maintainer="1733295510 <1733295510@qq.com>"
 LABEL org.opencontainers.image.title="scRNA-interop"
